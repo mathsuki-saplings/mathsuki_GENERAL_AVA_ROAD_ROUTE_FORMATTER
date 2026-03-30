@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en-nz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ava Road Route Tool</title>
+
+  <style>
+    :root{
+      --mint: #98FB98;
+      --mint-soft: #eaffe7;
+      --card-bg: #ffffff;
+      --muted: #6b6b6b;
+      --text: #1b1b1b;
+      --primary: #2b8a8a;
+      --primary-contrast: #ffffff;
+      --danger: #e05858;
+      --input-border: #d7d7d7;
+      --shadow: 0 8px 28px rgba(15,15,15,0.06);
+      --radius-lg: 14px;
+      --radius-md: 8px;
+      --max-width: 840px;
+      --gap: 12px;
+      --control-height: 40px;
+      --max-zones: 10;
+    }
+
+    /* Base: background and layout */
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      color:var(--text);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0.55)),
+        radial-gradient(60% 60% at 10% 10%, rgba(152,251,152,0.10), transparent 15%),
+        var(--mint);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      box-sizing:border-box;
+    }
+
+    /* Card */
+    .wrap{
+      width:100%;
+      max-width:var(--max-width);
+      background:linear-gradient(180deg, var(--card-bg), var(--mint-soft));
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow);
+      padding:20px;
+      box-sizing:border-box;
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:18px;
+    }
+
+    h1{
+      font-size:20px;
+      margin:0;
+      color:var(--text);
+      letter-spacing:0.2px;
+    }
+    .tagline{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .row { display:flex; gap:var(--gap); align-items:center; flex-wrap:wrap; }
+    .col { display:flex; flex-direction:column; gap:8px; }
+
+    .controls {
+      display:flex;
+      gap:var(--gap);
+      align-items:center;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+
+    label.small{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    input[type="text"], input[type="number"], select {
+      height:var(--control-height);
+      padding:8px 12px;
+      border-radius:var(--radius-md);
+      border:1px solid var(--input-border);
+      font-size:14px;
+      outline:none;
+      transition: box-shadow .15s ease, border-color .12s ease, transform .08s ease;
+      background: #fff;
+      color:var(--text);
+      min-width:120px;
+      box-sizing:border-box;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      box-shadow: 0 6px 18px rgba(43,138,138,0.12);
+      border-color: rgba(43,138,138,0.8);
+      transform: translateY(-1px);
+    }
+
+    /* Zones area */
+    #zones-container{
+      margin-bottom:14px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .zone-row{
+      display:grid;
+      grid-template-columns: 1fr 56px;
+      gap:8px;
+      align-items:center;
+    }
+
+    .zone-row input {
+      height:44px;
+      padding:10px 12px;
+      font-size:15px;
+      border-radius:10px;
+      text-transform:uppercase; /* visual uppercase */
+    }
+
+    .btn {
+      height:44px;
+      padding:10px 14px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      font-weight:600;
+      font-size:14px;
+      transition: transform .08s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    /* Add zone + note row */
+    .add-zone-row {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    }
+    #add-zone {
+      background: linear-gradient(180deg, var(--primary), #1f6f6f);
+      color: var(--primary-contrast);
+      border-radius: 10px;
+      padding:9px 14px;
+      box-shadow: 0 6px 16px rgba(43,138,138,0.12);
+      margin:0;
+    }
+    #add-zone[disabled] { opacity:0.6; cursor:not-allowed; box-shadow:none; }
+
+    .add-note {
+      color:var(--muted);
+      font-size:13px;
+      line-height:1;
+      white-space:nowrap;
+    }
+
+    .remove-btn{
+      width:56px;
+      height:44px;
+      border-radius:10px;
+      border:none;
+      background:linear-gradient(180deg, #ff7070, #e04f4f);
+      color:white;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow: 0 6px 14px rgba(224,79,79,0.12);
+    }
+
+    .remove-btn:hover { filter:brightness(.98); }
+
+    .time-row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-top:6px;
+      flex-wrap:wrap;
+    }
+
+    .time-inputs { display:flex; gap:8px; align-items:center; }
+
+    .result-row {
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+
+    #result{
+      flex:1;
+      background:linear-gradient(180deg, #fff, #fbfffb);
+      padding:14px 16px;
+      border-radius:10px;
+      border:1px solid var(--input-border);
+      font-size:15px;
+      color:var(--text);
+      min-height:56px;
+      box-sizing:border-box;
+      overflow:auto;
+      word-break:break-all;
+      white-space:pre-wrap;
+      user-select:text;
+    }
+
+    #calculate-button{
+      background: linear-gradient(180deg, var(--primary), #1f6f6f);
+      color:var(--primary-contrast);
+      padding:10px 14px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      font-weight:700;
+      box-shadow: 0 8px 24px rgba(43,138,138,0.12);
+    }
+    #calculate-button:hover { transform: translateY(-2px); }
+
+    #copy-button {
+      background: transparent;
+      border: 1px solid rgba(0,0,0,0.06);
+      padding:8px 10px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    .copy-msg {
+      font-size:13px;
+      color:var(--primary);
+      margin-left:8px;
+      opacity:0;
+      transition: opacity .25s ease;
+    }
+
+    .copy-msg.show { opacity:1; }
+
+    .muted { color:var(--muted); font-size:13px; }
+
+    /* ---------- MOBILE / SMALL SCREEN ADJUSTMENTS ---------- */
+    @media (max-width:720px) {
+      .wrap { padding:16px; }
+      .controls { flex-direction:column; align-items:stretch; gap:10px; }
+      .controls .col { width:100%; }
+      .col input, .col select { width:100%; min-width:0; }
+
+      .add-zone-row { flex-direction:column; align-items:stretch; gap:8px; }
+      #add-zone { width:100%; }
+
+      .zone-row { grid-template-columns: 1fr 48px; gap:6px; }
+      .zone-row input { height:48px; font-size:16px; padding:12px; }
+      .remove-btn { width:48px; height:48px; border-radius:8px; }
+
+      .time-row { flex-direction:column; align-items:stretch; gap:8px; }
+      .time-inputs { width:100%; }
+
+      .result-row { flex-direction:column; align-items:stretch; gap:10px; }
+      #result { min-height:84px; padding:12px; font-size:16px; }
+      #calculate-button, #copy-button { width:100%; display:block; }
+
+      .btn, #copy-button { height:52px; font-size:16px; border-radius:10px; }
+
+      .add-note { text-align:left; font-size:13px; }
+
+      h1 { font-size:18px; }
+    }
+
+    @media (max-width:420px) {
+      body { padding:16px; }
+      .wrap { padding:12px; border-radius:12px; }
+      .zone-row input { font-size:15px; height:50px; }
+      .add-note { font-size:12px; }
+      #result { font-size:15px; min-height:100px; }
+      #calculate-button, #copy-button { height:52px; font-size:15px; }
+    }
+
+    @media (min-width:721px) {
+      .controls { flex-direction:row; align-items:center; }
+      .result-row { flex-direction:row; align-items:center; }
+      .add-zone-row { flex-direction:row; align-items:center; }
+      .zone-row { grid-template-columns: 1fr 56px; }
+      #result { min-height:56px; }
+    }
+    /* ---------- END MOBILE RULES ---------- */
+
+  </style>
+</head>
+
+<body>
+  <div class="wrap" role="main" aria-labelledby="title">
+    <header>
+      <div>
+        <h1 id="title">mathsuki's Ava Route Tool</h1>
+      </div>
+      <div class="muted" aria-hidden="true">v2</div>
+    </header>
+
+    <!-- Zones -->
+    <div id="zones-container" aria-live="polite"></div>
+
+    <!-- Add zone + dynamic note -->
+    <div class="add-zone-row">
+      <button id="add-zone" class="btn" aria-label="Add zone">+ Add Zone</button>
+      <div class="add-note" id="add-note">Up to 10 zones</div>
+    </div>
+
+    <!-- Compact controls -->
+    <div class="controls" style="margin-top:12px;">
+      <div class="col" style="min-width:180px;">
+        <label class="small" for="finalzone">Final Zone</label>
+        <input id="finalzone" type="text" placeholder="zone name" aria-label="Final zone" />
+      </div>
+
+      <div class="col">
+        <label class="small" for="zonetype">Zone Type</label>
+        <select id="zonetype" aria-label="Zone type">
+          <option value="">zone type</option>
+          <option>Black Zone</option>
+          <option>Red Zone</option>
+          <option>Yellow Zone</option>
+          <option>Blue Zone</option>
+        </select>
+      </div>
+
+      <div class="col">
+        <label class="small" for="city">City</label>
+        <select id="city" aria-label="City">
+          <option value="">city</option>
+          <option value="FS">Fort Sterling</option>
+          <option value="ML">Martlock</option>
+          <option value="BW">Bridgewatch</option>
+          <option value="TH">Thetford</option>
+          <option value="LY">Lymhurst</option>
+          <!-- New special city -->
+          <option value="Brecilien">Brecilien</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Shared time input -->
+    <div class="time-row">
+      <div class="time-inputs">
+        <div class="col">
+          <label class="small" for="lowHours">Shortest Remaining Timer</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input id="lowHours" type="number" min="0" max="23" value="0" aria-label="Lowest hours" style="width:88px;" /> <span class="muted">h</span>
+            <input id="lowMins" type="number" min="0" max="59" value="0" aria-label="Lowest minutes" style="width:88px;" /> <span class="muted">m</span>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+
+    <!-- Result + generate + copy -->
+    <div class="result-row">
+      <div id="result" role="textbox" aria-readonly="true" aria-label="Generated output"></div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button id="calculate-button" class="btn" aria-label="Generate discord string">Generate</button>
+        <button id="copy-button" title="Copy" aria-label="Copy generated string">Copy</button>
+      </div>
+    </div>
+
+    <div style="margin-top:12px; display:flex; align-items:center;">
+      <div class="muted">Guide: Add zone initials , Input timer , Generate , Copy & Paste to Discord!</div>
+      <div class="copy-msg" id="copy-msg">Copied!</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const maxZones = Number(getComputedStyle(document.documentElement).getPropertyValue('--max-zones')) || 10;
+      let zoneCount = 0;
+      const zones = {};
+
+      const zonesContainer = document.getElementById('zones-container');
+      const addZoneBtn = document.getElementById('add-zone');
+      const addNoteEl = document.getElementById('add-note');
+      const resultEl = document.getElementById('result');
+      const copyBtn = document.getElementById('copy-button');
+      const copyMsg = document.getElementById('copy-msg');
+
+      function updateAddNote() {
+        const slotsLeft = Math.max(0, maxZones - zoneCount);
+        addNoteEl.textContent = ``;
+      }
+
+      function createZoneRow(i) {
+        const row = document.createElement('div');
+        row.className = 'zone-row';
+        row.dataset.index = i;
+
+        row.innerHTML = `
+          <input id="zone${i}-name" type="text" placeholder="e.g. SAO" aria-label="Zone ${i} initials">
+          <button class="remove-btn" title="Remove zone" aria-label="Remove zone ${i}">–</button>
+        `;
+
+        zones[i] = { name: '' };
+        zonesContainer.appendChild(row);
+
+        const input = document.getElementById(`zone${i}-name`);
+        input.addEventListener('input', (e) => {
+          // keep input uppercase visually & logically
+          const val = (e.target.value || '').toUpperCase();
+          e.target.value = val;
+          zones[i].name = val.trim();
+        });
+
+        row.querySelector('.remove-btn')
+           .addEventListener('click', () => removeZone(i));
+
+        updateAddNote();
+      }
+
+      function removeZone(i) {
+        const row = zonesContainer.querySelector(`.zone-row[data-index='${i}']`);
+        if (!row) return;
+        row.remove();
+        delete zones[i];
+        zoneCount = Math.max(0, zoneCount - 1);
+        addZoneBtn.disabled = false;
+        updateAddNote();
+      }
+
+      function addZone() {
+        if (zoneCount < maxZones) {
+          zoneCount++;
+          createZoneRow(zoneCount);
+          if (zoneCount === maxZones) addZoneBtn.disabled = true;
+          updateAddNote();
+        }
+      }
+
+      function Run() {
+        const ordered = Object.keys(zones).map(Number).sort((a,b)=>a-b);
+        // filter out empty names
+        const rawNames = ordered
+          .map(i => (zones[i].name || '').trim())
+          .filter(s => s.length > 0);
+
+        if (rawNames.length === 0) {
+          resultEl.textContent = '';
+          return;
+        }
+
+        // decorate SAO occurrences with :ShadSyn:
+        const decorateName = (s) => {
+          if (!s) return s;
+          const up = s.toUpperCase();
+          if (up === 'SAO') return 'SAO:ShadSyn:';
+          if (up.includes('SHADSYN')) return s;
+          return s;
+        };
+
+        let names = rawNames.map(decorateName);
+
+        // Bold the very first zone initial (if not already bolded)
+        const isAlreadyBold = (str) => /^\*\*.*\*\*$/.test(str);
+        if (names.length > 0 && !isAlreadyBold(names[0])) {
+          names[0] = `**${names[0]}**`;
+        }
+
+        const hours = +document.getElementById('lowHours').value || 0;
+        const mins = +document.getElementById('lowMins').value || 0;
+
+        const now = Math.floor(Date.now() / 1000);
+        const ts = now + hours * 3600 + mins * 60;
+
+        const rawType = document.getElementById('zonetype').value || '';
+        const emojiKey = rawType.toLowerCase().replace(/\s+/g, '');
+
+        // City logic:
+        // - If Brecilien selected => use Brecilien as the emoji label and IGNORE finalZone.
+        // - Else if Black Zone selected => append "P" to normal city codes (if not already).
+        const cityRaw = document.getElementById('city').value || '—';
+        const zoneTypeNormalized = rawType.toLowerCase().trim();
+        let cityOut = cityRaw;
+
+        if (cityOut === 'Brecilien') {
+          // Brecilien special case: use directly and ignore finalZone.
+        } else {
+          if (cityOut !== '—' && zoneTypeNormalized.includes('black')) {
+            if (!cityOut.endsWith('P')) cityOut = cityOut + 'P';
+          }
+        }
+
+        const finalZoneInput = document.getElementById('finalzone').value.trim() || '—';
+
+        // Build the label that will be bolded
+        let label = '';
+        if (cityOut === 'Brecilien') {
+          label = `:${emojiKey}:Brecilien`;
+        } else {
+          label = `:${emojiKey}:${finalZoneInput} (${cityOut})`;
+        }
+
+        // Bold the label for Discord and keep the timestamp after it
+        const finalPart = `**${label}** <t:${ts}:R>`;
+
+        resultEl.textContent = [...names, finalPart].join(' - ');
+      }
+
+      // initialize
+      addZone();
+      updateAddNote();
+
+      // events
+      addZoneBtn.addEventListener('click', addZone);
+      document.getElementById('calculate-button').addEventListener('click', Run);
+      copyBtn.addEventListener('click', async () => {
+        const text = resultEl.textContent || '';
+        if (!text) return;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+          }
+          // flash copied
+          copyMsg.classList.add('show');
+          setTimeout(() => copyMsg.classList.remove('show'), 1100);
+        } catch (err) {
+          console.error('copy failed', err);
+        }
+      });
+
+      // keyboard: Enter on inputs also generates
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const active = document.activeElement;
+          if (active && (active.tagName === 'INPUT' || active.tagName === 'SELECT')) {
+            e.preventDefault();
+            Run();
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
