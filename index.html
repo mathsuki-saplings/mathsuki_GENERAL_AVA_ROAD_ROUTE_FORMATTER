@@ -324,13 +324,13 @@
 
     <div class="controls" style="margin-top:12px;">
       <div class="col" style="min-width:180px;">
-        <label class="small" for="fromwhere">From where</label>
-        <input id="fromwhere" type="text" placeholder="from zone" aria-label="From where" />
+        <label class="small" for="fromwhere">From Where?</label>
+        <input id="fromwhere" type="text" placeholder="" aria-label="From where" />
       </div>
 
       <div class="col" style="min-width:180px;">
-        <label class="small" for="towhere">To where</label>
-        <input id="towhere" type="text" placeholder="to zone" aria-label="To where" />
+        <label class="small" for="towhere">To Where?</label>
+        <input id="towhere" type="text" placeholder="" aria-label="To where" />
       </div>
 
       <div class="col">
@@ -338,7 +338,7 @@
         <select id="zonetype" aria-label="Zone type">
           <option value="">zone type</option>
           <option value="Outlands">Outlands</option>
-          <option value="Royal City">Royal City</option>
+          <option value="Royal">Royal</option>
         </select>
       </div>
 
@@ -359,7 +359,7 @@
     <div id="zones-container" aria-live="polite"></div>
 
     <div class="add-zone-row">
-      <button id="add-zone" class="btn" aria-label="Add zone">+ Add Zone</button>
+      <button id="add-zone" class="btn" aria-label="Add zone">+ Add Portal</button>
       <div class="add-note" id="add-note">Up to 10 zones</div>
     </div>
 
@@ -410,7 +410,7 @@
       function updateAddNote() {
         const slotsLeft = Math.max(0, maxZones - zoneCount);
         addNoteEl.textContent = slotsLeft > 0
-          ? `${slotsLeft} zone slot${slotsLeft === 1 ? '' : 's'} left`
+          ? `${slotsLeft}  slot${slotsLeft === 1 ? '' : 's'} left`
           : 'Up to 10 zones';
       }
 
@@ -438,7 +438,7 @@
         row.dataset.index = i;
 
         row.innerHTML = `
-          <input id="zone${i}-name" type="text" placeholder="e.g. SAO" aria-label="Zone ${i} initials">
+          <input id="zone${i}-name" type="text" placeholder="" aria-label="Zone ${i} initials">
           <button class="remove-btn" title="Remove zone" aria-label="Remove zone ${i}">–</button>
         `;
 
