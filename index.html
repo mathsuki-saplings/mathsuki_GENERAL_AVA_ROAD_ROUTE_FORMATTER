@@ -25,7 +25,6 @@
       --max-zones: 10;
     }
 
-    /* Base: background and layout */
     html,body{
       height:100%;
       margin:0;
@@ -44,7 +43,6 @@
       box-sizing:border-box;
     }
 
-    /* Card */
     .wrap{
       width:100%;
       max-width:var(--max-width);
@@ -70,12 +68,9 @@
       color:var(--text);
       letter-spacing:0.2px;
     }
-    .tagline{
-      color:var(--muted);
-      font-size:13px;
-    }
 
-    .row { display:flex; gap:var(--gap); align-items:center; flex-wrap:wrap; }
+    .muted { color:var(--muted); font-size:13px; }
+
     .col { display:flex; flex-direction:column; gap:8px; }
 
     .controls {
@@ -113,7 +108,6 @@
       transform: translateY(-1px);
     }
 
-    /* Zones area */
     #zones-container{
       margin-bottom:14px;
       display:flex;
@@ -133,7 +127,7 @@
       padding:10px 12px;
       font-size:15px;
       border-radius:10px;
-      text-transform:uppercase; /* visual uppercase */
+      text-transform:uppercase;
     }
 
     .btn {
@@ -144,12 +138,11 @@
       cursor:pointer;
       font-weight:600;
       font-size:14px;
-      transition: transform .08s ease, box-shadow .12s ease, opacity .12s ease;
+      transition: transform .08s ease, box-shadow .12s ease, opacity .12s ease, filter .12s ease;
     }
 
     .btn:active { transform: translateY(1px); }
 
-    /* Add zone + note row */
     .add-zone-row {
       display:flex;
       align-items:center;
@@ -157,6 +150,7 @@
       margin-bottom:8px;
       flex-wrap:wrap;
     }
+
     #add-zone {
       background: linear-gradient(180deg, var(--primary), #1f6f6f);
       color: var(--primary-contrast);
@@ -165,6 +159,7 @@
       box-shadow: 0 6px 16px rgba(43,138,138,0.12);
       margin:0;
     }
+
     #add-zone[disabled] { opacity:0.6; cursor:not-allowed; box-shadow:none; }
 
     .add-note {
@@ -220,6 +215,13 @@
       word-break:break-all;
       white-space:pre-wrap;
       user-select:text;
+      transition: box-shadow .15s ease, transform .08s ease, border-color .12s ease;
+    }
+
+    #result.flash {
+      box-shadow: 0 8px 24px rgba(43,138,138,0.12);
+      border-color: rgba(43,138,138,0.45);
+      transform: translateY(-1px);
     }
 
     #calculate-button{
@@ -241,6 +243,11 @@
       border-radius:8px;
       cursor:pointer;
       font-weight:600;
+      transition: transform .08s ease, opacity .12s ease, background .12s ease;
+    }
+
+    #copy-button:hover {
+      background: rgba(255,255,255,0.7);
     }
 
     .copy-msg {
@@ -253,9 +260,13 @@
 
     .copy-msg.show { opacity:1; }
 
-    .muted { color:var(--muted); font-size:13px; }
+    .error-msg{
+      margin-top:10px;
+      color:var(--danger);
+      font-size:13px;
+      min-height:18px;
+    }
 
-    /* ---------- MOBILE / SMALL SCREEN ADJUSTMENTS ---------- */
     @media (max-width:720px) {
       .wrap { padding:16px; }
       .controls { flex-direction:column; align-items:stretch; gap:10px; }
@@ -299,8 +310,6 @@
       .zone-row { grid-template-columns: 1fr 56px; }
       #result { min-height:56px; }
     }
-    /* ---------- END MOBILE RULES ---------- */
-
   </style>
 </head>
 
@@ -313,30 +322,23 @@
       <div class="muted" aria-hidden="true">v2</div>
     </header>
 
-    <!-- Zones -->
-    <div id="zones-container" aria-live="polite"></div>
-
-    <!-- Add zone + dynamic note -->
-    <div class="add-zone-row">
-      <button id="add-zone" class="btn" aria-label="Add zone">+ Add Zone</button>
-      <div class="add-note" id="add-note">Up to 10 zones</div>
-    </div>
-
-    <!-- Compact controls -->
     <div class="controls" style="margin-top:12px;">
       <div class="col" style="min-width:180px;">
-        <label class="small" for="finalzone">Final Zone</label>
-        <input id="finalzone" type="text" placeholder="zone name" aria-label="Final zone" />
+        <label class="small" for="fromwhere">From where</label>
+        <input id="fromwhere" type="text" placeholder="from zone" aria-label="From where" />
+      </div>
+
+      <div class="col" style="min-width:180px;">
+        <label class="small" for="towhere">To where</label>
+        <input id="towhere" type="text" placeholder="to zone" aria-label="To where" />
       </div>
 
       <div class="col">
         <label class="small" for="zonetype">Zone Type</label>
         <select id="zonetype" aria-label="Zone type">
           <option value="">zone type</option>
-          <option>Black Zone</option>
-          <option>Red Zone</option>
-          <option>Yellow Zone</option>
-          <option>Blue Zone</option>
+          <option value="Outlands">Outlands</option>
+          <option value="Royal City">Royal City</option>
         </select>
       </div>
 
@@ -349,13 +351,18 @@
           <option value="BW">Bridgewatch</option>
           <option value="TH">Thetford</option>
           <option value="LY">Lymhurst</option>
-          <!-- New special city -->
           <option value="Brecilien">Brecilien</option>
         </select>
       </div>
     </div>
 
-    <!-- Shared time input -->
+    <div id="zones-container" aria-live="polite"></div>
+
+    <div class="add-zone-row">
+      <button id="add-zone" class="btn" aria-label="Add zone">+ Add Zone</button>
+      <div class="add-note" id="add-note">Up to 10 zones</div>
+    </div>
+
     <div class="time-row">
       <div class="time-inputs">
         <div class="col">
@@ -369,7 +376,8 @@
       <div style="flex:1"></div>
     </div>
 
-    <!-- Result + generate + copy -->
+    <div class="error-msg" id="error-msg" aria-live="polite"></div>
+
     <div class="result-row">
       <div id="result" role="textbox" aria-readonly="true" aria-label="Generated output"></div>
       <div style="display:flex; gap:8px; align-items:center;">
@@ -379,7 +387,7 @@
     </div>
 
     <div style="margin-top:12px; display:flex; align-items:center;">
-      <div class="muted">Guide: Add zone initials , Input timer , Generate , Copy & Paste to Discord!</div>
+      <div class="muted">Guide: Add zone initials, input timer, generate, then copy to Discord.</div>
       <div class="copy-msg" id="copy-msg">Copied!</div>
     </div>
   </div>
@@ -396,11 +404,33 @@
       const resultEl = document.getElementById('result');
       const copyBtn = document.getElementById('copy-button');
       const copyMsg = document.getElementById('copy-msg');
+      const errorMsg = document.getElementById('error-msg');
+      const generateBtn = document.getElementById('calculate-button');
 
       function updateAddNote() {
         const slotsLeft = Math.max(0, maxZones - zoneCount);
-        addNoteEl.textContent = ``;
+        addNoteEl.textContent = slotsLeft > 0
+          ? `${slotsLeft} zone slot${slotsLeft === 1 ? '' : 's'} left`
+          : 'Up to 10 zones';
       }
+
+      function setError(message) {
+        errorMsg.textContent = message || '';
+      }
+
+      function flashResult() {
+        resultEl.classList.add('flash');
+        setTimeout(() => resultEl.classList.remove('flash'), 180);
+      }
+
+      function forceUppercaseInput(inputEl) {
+        inputEl.addEventListener('input', (e) => {
+          e.target.value = e.target.value.toUpperCase();
+        });
+      }
+
+      forceUppercaseInput(document.getElementById('fromwhere'));
+      forceUppercaseInput(document.getElementById('towhere'));
 
       function createZoneRow(i) {
         const row = document.createElement('div');
@@ -416,26 +446,20 @@
         zonesContainer.appendChild(row);
 
         const input = document.getElementById(`zone${i}-name`);
+        forceUppercaseInput(input);
+
         input.addEventListener('input', (e) => {
-          // keep input uppercase visually & logically
-          const val = (e.target.value || '').toUpperCase();
-          e.target.value = val;
-          zones[i].name = val.trim();
+          zones[i].name = (e.target.value || '').trim().toUpperCase();
         });
 
-        row.querySelector('.remove-btn')
-           .addEventListener('click', () => removeZone(i));
+        row.querySelector('.remove-btn').addEventListener('click', () => {
+          row.remove();
+          delete zones[i];
+          zoneCount = Math.max(0, zoneCount - 1);
+          addZoneBtn.disabled = false;
+          updateAddNote();
+        });
 
-        updateAddNote();
-      }
-
-      function removeZone(i) {
-        const row = zonesContainer.querySelector(`.zone-row[data-index='${i}']`);
-        if (!row) return;
-        row.remove();
-        delete zones[i];
-        zoneCount = Math.max(0, zoneCount - 1);
-        addZoneBtn.disabled = false;
         updateAddNote();
       }
 
@@ -449,105 +473,94 @@
       }
 
       function Run() {
-        const ordered = Object.keys(zones).map(Number).sort((a,b)=>a-b);
-        // filter out empty names
-        const rawNames = ordered
-          .map(i => (zones[i].name || '').trim())
-          .filter(s => s.length > 0);
+        setError('');
 
-        if (rawNames.length === 0) {
+        const fromWhere = (document.getElementById('fromwhere').value || '').trim().toUpperCase();
+        const toWhere = (document.getElementById('towhere').value || '').trim().toUpperCase();
+        const type = document.getElementById('zonetype').value;
+        const city = document.getElementById('city').value || '';
+
+        if (!fromWhere) {
+          setError('Please fill in From where.');
           resultEl.textContent = '';
           return;
         }
 
-        // decorate SAO occurrences with :ShadSyn:
-        const decorateName = (s) => {
-          if (!s) return s;
-          const up = s.toUpperCase();
-          if (up === 'SAO') return 'SAO:ShadSyn:';
-          if (up.includes('SHADSYN')) return s;
-          return s;
-        };
-
-        let names = rawNames.map(decorateName);
-
-        // Bold the very first zone initial (if not already bolded)
-        const isAlreadyBold = (str) => /^\*\*.*\*\*$/.test(str);
-        if (names.length > 0 && !isAlreadyBold(names[0])) {
-          names[0] = `**${names[0]}**`;
+        if (city !== 'Brecilien' && !toWhere) {
+          setError('Please fill in To where.');
+          resultEl.textContent = '';
+          return;
         }
+
+        const ordered = Object.keys(zones).map(Number).sort((a, b) => a - b);
+        const zoneList = ordered
+          .map(i => (zones[i].name || '').trim().toUpperCase())
+          .filter(Boolean);
 
         const hours = +document.getElementById('lowHours').value || 0;
         const mins = +document.getElementById('lowMins').value || 0;
+        const ts = Math.floor(Date.now() / 1000) + hours * 3600 + mins * 60;
 
-        const now = Math.floor(Date.now() / 1000);
-        const ts = now + hours * 3600 + mins * 60;
-
-        const rawType = document.getElementById('zonetype').value || '';
-        const emojiKey = rawType.toLowerCase().replace(/\s+/g, '');
-
-        // City logic:
-        // - If Brecilien selected => use Brecilien as the emoji label and IGNORE finalZone.
-        // - Else if Black Zone selected => append "P" to normal city codes (if not already).
-        const cityRaw = document.getElementById('city').value || '—';
-        const zoneTypeNormalized = rawType.toLowerCase().trim();
-        let cityOut = cityRaw;
-
-        if (cityOut === 'Brecilien') {
-          // Brecilien special case: use directly and ignore finalZone.
+        let destination = '';
+        if (city === 'Brecilien') {
+          destination = 'BRECILIEN';
         } else {
-          if (cityOut !== '—' && zoneTypeNormalized.includes('black')) {
-            if (!cityOut.endsWith('P')) cityOut = cityOut + 'P';
+          let cityOut = city;
+          if (type === 'Outlands' && cityOut) {
+            cityOut = cityOut + 'P';
           }
+          destination = cityOut ? `${toWhere}(${cityOut})` : toWhere;
         }
 
-        const finalZoneInput = document.getElementById('finalzone').value.trim() || '—';
+        const output = [
+          `**${fromWhere}**`,
+          ...zoneList,
+          `**${destination}** <t:${ts}:R>`
+        ];
 
-        // Build the label that will be bolded
-        let label = '';
-        if (cityOut === 'Brecilien') {
-          label = `:${emojiKey}:Brecilien`;
-        } else {
-          label = `:${emojiKey}:${finalZoneInput} (${cityOut})`;
-        }
-
-        // Bold the label for Discord and keep the timestamp after it
-        const finalPart = `**${label}** <t:${ts}:R>`;
-
-        resultEl.textContent = [...names, finalPart].join(' - ');
+        resultEl.textContent = output.join(' - ');
+        flashResult();
       }
 
-      // initialize
-      addZone();
-      updateAddNote();
-
-      // events
-      addZoneBtn.addEventListener('click', addZone);
-      document.getElementById('calculate-button').addEventListener('click', Run);
-      copyBtn.addEventListener('click', async () => {
+      function copyOutput() {
         const text = resultEl.textContent || '';
         if (!text) return;
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(text);
-          } else {
-            // fallback
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            ta.remove();
-          }
-          // flash copied
+
+        const done = () => {
           copyMsg.classList.add('show');
           setTimeout(() => copyMsg.classList.remove('show'), 1100);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch((err) => {
+            console.error('copy failed', err);
+          });
+          return;
+        }
+
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'absolute';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          done();
         } catch (err) {
           console.error('copy failed', err);
         }
-      });
+      }
 
-      // keyboard: Enter on inputs also generates
+      addZone();
+      updateAddNote();
+
+      addZoneBtn.addEventListener('click', addZone);
+      generateBtn.addEventListener('click', Run);
+      copyBtn.addEventListener('click', copyOutput);
+
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const active = document.activeElement;
